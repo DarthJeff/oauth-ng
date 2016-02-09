@@ -1,4 +1,4 @@
-/* oauth-ng - v0.4.4 - 2016-01-27 */
+/* oauth-ng - v0.4.9 - 2016-02-09 */
 
 'use strict';
 
@@ -285,29 +285,27 @@ profileClient.factory('Profile', ['$http', 'AccessToken', '$rootScope', function
 
 'use strict';
 
-var storageService = angular.module('oauth.storage', ['ngStorage']);
+var storageService = angular.module('oauth.storage', ['ngCookies']);
 
-storageService.factory('Storage', ['$rootScope', '$sessionStorage', '$localStorage', function($rootScope, $sessionStorage, $localStorage){
+storageService.factory('Storage', ['$rootScope', '$cookies', function ($rootScope, $cookies) {
 
-  var service = {
-    storage: $sessionStorage // By default
-  };
+    var service = {};
 
   /**
    * Deletes the item from storage,
    * Returns the item's previous value
    */
   service.delete = function (name) {
-    var stored = this.get(name);
-    delete this.storage[name];
-    return stored;
+      var stored = this.get(name);
+      $cookies.remove('oauthng-' + name);
+      return stored;
   };
 
   /**
    * Returns the item from storage
    */
   service.get = function (name) {
-    return this.storage[name];
+      return $cookies.getObject('oauthng-' + name);
   };
 
   /**
@@ -315,19 +313,14 @@ storageService.factory('Storage', ['$rootScope', '$sessionStorage', '$localStora
    * Returns the item's value
    */
   service.set = function (name, value) {
-    this.storage[name] = value;
-    return this.get(name);
+      $cookies.putObject('oauthng-' + name, value);
+      return this.get(name);
   };
 
   /**
    * Change the storage service being used
    */
-  service.use = function (storage) {
-    if (storage === 'sessionStorage') {
-      this.storage = $sessionStorage;
-    } else if (storage === 'localStorage') {
-      this.storage = $localStorage;
-    }
+  service.use = function () {
   };
 
   return service;
@@ -496,7 +489,7 @@ directives.directive('oauth', [
       };
 
       scope.executeCustomFunction = function (params) {
-          return scope.customFunction(params);
+          return scope.customFunction({ params: params });
       };
 
       var modalInstance;
